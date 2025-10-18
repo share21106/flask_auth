@@ -1,15 +1,33 @@
 from flask import Flask
-from flask_pymongo import PyMongo
+from pymongo import MongoClient
+from flask import g
 
-mongo = PyMongo()
 
-def create_app():
-    app = Flask(__name__, static_folder='static', template_folder='templates')
-    app.config.from_object('config.Config')
+def create_app(config=None):
+    app = Flask(__name__)
+    app.config.update({
+        'MONGO_URI': 'mongodb://localhost:27017/flask_auth',
+        'SECRET_KEY': 'change-me',
+    })
+    if config:
+        app.config.update(config)
 
-    mongo.init_app(app)
+    @app.before_request
+    def before_request():
+        if not hasattr(g, 'mongo'):
+            g.mongo = MongoClient(app.config['MONGO_URI'])
+            g.db = g.mongo.get_default_database()
 
-    from .routes import main
-    app.register_blueprint(main)
+    @app.teardown_appcontext
+    def teardown(exception):
+        mongo = getattr(g, 'mongo', None)
+        if mongo is not None:
+            mongo.close()
+
+    from .auth import bp as auth_bp
+    from .main import bp as main_bp
+
+    app.register_blueprint(auth_bp)
+    app.register_blueprint(main_bp)
 
     return app

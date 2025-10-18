@@ -1,0 +1,10 @@
+{% extends 'base.html' %}
+
+{% block title %}Home - Flask Mongo Auth{% endblock %}
+
+{% block content %}
+  <h1>Welcome{% if username %}, {{ username }}{% endif %}!</h1>
+  {% if not username %}
+  <p>Please <a href="{{ url_for('auth.login') }}">log in</a> or <a href="{{ url_for('auth.register') }}">register</a>.</p>
+  {% endif %}
+{% endblock %}
